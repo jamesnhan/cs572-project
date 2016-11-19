@@ -1,0 +1,286 @@
+#+TITLE: Automatic Project Rator
+#+SUBTITLE: Goal, approach, anticipated results and related work
+#+OPTIONS: toc:nil
+#+LATEX_CLASS: article
+#+LATEX_HEADER: \usepackage{geometry}
+#+LATEX_HEADER: \geometry{margin=1in}
+#+LATEX_HEADER: \usepackage{indentfirst}
+#+LATEX_HEADER: \usepackage{fancyhdr}
+#+LATEX_HEADER: \pagestyle{fancy}
+#+LATEX_HEADER: \fancyhf{}
+#+LATEX_HEADER: \rhead{572 Project}
+#+LATEX_HEADER: \lhead{Automatic Project Rator}
+#+AUTHOR: Hebi Li
+
+
+
+* goals of the project
+Research into the possibility of predict project quality by only
+textual features.  There are numerous projects hosted on Github.
+However, open source projects have different qualities.  Projects
+developed by in-experienced developers tend to have lower quality
+compared to projects with high reputation.  Knowing the quality of a
+project is beneficial to developers, students interested in learning
+the project, as well as the potential users.  Judging the quality of a
+project is non-trivial, and may require manual effort and domain
+knowledge.
+
+
+# Traditional open source projects are not explicitly rated.
+# For example, GNU projects do not have a rating system, and people knows the famous one based on their reputation, e.g. =gcc= has high reputation to be recognized as good projects.
+
+This work aims to provide a general prediction model for the quality of projects, based on their textual features.
+
+* Proposed Approach
+
+We have collected projects with different quality via Github API.
+We collect 1000 top rated project for each of the following languages:
+c, java, javascript, python, ruby, php, c++, c#, objective-c, shell.
+The rating ranging from hundreds of stars to over one hundred
+thousand of stars. The different programming languages gives us a
+broader view of the potential properties of differnet
+communities. Also, we collect the data by the order of rating, thus
+do not suffer from bias caused by crawling by users relationship. The
+current projects number in total is 10,000, if we find this is not
+enough, we might use the crawling approach but with bread-first
+approach, to be as unbiased as possible.
+
+Projects can be rated by different metrics: a) download times b)
+lifetime length c) commit number d) a rating system: e.g. github star
+e) number of contributors f) number of watchers.  Specifically, we
+propose to mine the meta data from github as our corpus, and use the
+number of stars as the quality ground truth.  We may also use other
+metrics, such as download times, along or combined together.
+Considering the huge number of projects on github, we may choose to
+set to threshold, i.e. only projects with at least certain number of
+stars will be included into the corpus.
+
+We propose to use mainly the file-level and textural features to
+predict the quality.  The proposed features include: 1) number of
+tests 2) number of documentation 3) number of source files 4) total
+source line of code 5) total source line of code in source directory
+(excluding libraries) 6) average length of source files 7) every depth
+of the file structure 8) average branching factor of the directories.
+
+Some attributes of a project may affect the effectiveness of these
+metrics.  For example, the language used in the project may affect the
+rating model.  C languages tend to have many stand-alone test files,
+while Java projects have unit test method mixed into source code.
+There are also features that are hard to collect the may influence the
+precision of the ground truth we selected.  For example, a lot of
+javascript projects on github have many stars, partially because they
+have a dedicated webpage as a demo of their project.  It is
+interesting to see the difference induced by these attributes.
+
+
+** Classifiers
+The second phase of this work is to fit a statistic model for the data
+we collect.
+
+*** Logistic Regression
+We apply several machine learning classifiers on the features extracted from training data set.
+Logistic regression\cite{hosmer2004applied}
+can be used to learn the model.
+The probability of the output to the problem is true is modeled by
+
+\begin{equation}
+p(X) = Pr(Y=1|X)
+\end{equation}
+
+We have $p$ features, thus
+
+\begin{equation}
+log(\frac{p(X)}{1-p(X)}) = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + ... + \beta_p X_p
+\end{equation}
+
+Where $X=(X_1,...,X_p)$ are $p$ predictors for $p$ features.
+This equation can be rewrite so that our /logistic function/ is
+
+\begin{equation}
+p(X) = \frac{e^{\beta_0 + \beta_1 X_1 + \beta_2 X_2 + ... + \beta_p X_p}}{1+e^{\beta_0 + \beta_1 X_1 + \beta_2 X_2 + ... + \beta_p X_p}}
+\end{equation}
+
+To fit this model, we use the /maximum likelihood/\cite[p. 130]{james2013introduction} method
+to estimate $\beta_0,...,\beta_p$.
+
+*** Support Vector Machine
+SVMs have been shown to perform well in a variety of settings,
+and are often considered one of the best “out of the box” classifiers
+\cite[p. 337]{james2013introduction}.
+
+In a p-dimensional space, a /hyperplane/ is a flat affine subspace of dimension $p-1$.
+
+\begin{equation}
+\beta_0 + \beta_1 X_1 + ... + \beta_p X_p = 0
+\end{equation}
+
+defines a p-dimensional hyperplane, which classifies the space into two.
+To fit the model, a natural choice is the /maximal margin hyperplane/.
+But it does not work well because it is not stable.
+The following figure taken from \cite[p. 345]{james2013introduction}
+is a good explaination of why it is not working.
+
+[[file:./svm.png]]
+
+/Support vector classfier/, sometimes called a /soft margin classifier/
+want the data not only on the correct side of the hyperplane
+but also on the correct side of the margin.
+Thus it is 1) greater robustness 2) better classification.
+
+The /Support Vector Machine/ is an extension of the support vector classifier
+that results from enlarging the feature space in a specific way, using /kernels/.
+Formally the classifier function is
+
+\begin{equation}
+f(x) = \beta_0 + \sum_{i \in S} \alpha_i K(x,x_i)
+\end{equation}
+
+where K(x_i, x_{i'}) is the /kernel/,
+which quantifies the similarity of the two observatiosn $x_i$ and $x_{i'}$.
+$\beta$ and $\alpha$ are parameters, $S$ is the collection of indices
+of these support points.
+
+We list several kernels we are intereted to experiment:
+
+- Linear Kernel.
+
+\begin{equation}
+K(x, x_i ) = x*x_i
+\end{equation}
+
+This kernel is very efficient when dealing with large
+sparse data vectors as is usually the case in text cate-
+gorization.
+
+- Polynomial
+
+\begin{equation}
+K(x, x_i ) = (\gamma * x * x_i +coeff)^{deg}
+\end{equation}
+
+This kernel is generally used in classification of images.
+
+- Radial Basis
+
+\begin{equation}
+K(x, x_i ) = exp(-\gamma|x - x_i|^2 )
+\end{equation}
+
+This is a general purpose kernel and is typically used
+when no further prior knowledge is available about the
+data.
+
+- Gaussian Radial Basis
+
+\begin{equation}
+K(x, x_i ) = exp(-\sigma|x-x_i|^2 )
+\end{equation}
+
+This is a general purpose kernel and is typically used
+when no further prior knowledge is available about the
+data.
+
+- Bessel
+
+
+\begin{equation}
+K(x, x_i ) = \frac{Bessel_{(v+1)}^n (\sigma | x-x_i|)}{(|x-
+x_i|)^{-n(v+1)}}
+\end{equation}
+
+This is a general purpose kernel and is typically used
+when no further prior knowledge is available about the
+data and is mainly popular in Gaussian process com-
+munity.
+
+- Laplace Radial Basis
+
+\begin{equation}
+K(x, x_i ) = exp(-\sigma|x-x_i|)
+\end{equation}
+
+This is a general purpose kernel and is typically used
+when no further prior knowledge is available.
+
+
+
+
+* anticipated results
+A model learned from 95% of the data to fit the rating of the projects.
+Using the 5% part to validate the precision and recall of the model.
+Or, if no model can achieve desired precision and recall, we want to
+be able to tell what's the potential issues and how can we learn from it.
+
+* Related Work
+A large body of work has been done for mining interesting data from
+software repositories. In face, the conference Mining Software
+Repositories(MSR) is dedicated for this. Our work is most related to
+this body of work.
+
+The most related work is OpenHub cite:Farah:2014:OSA:2597073.2597135
+by Farah and Tejada. The work presents a scalable and extensible
+architecture for the static and runtime analysis of open source
+repositories. They use more exepnsive techniques, and try to analyze
+the performance on a given of quality attributes. Their current
+analysis is limited to Python, while our technique aims to provide a
+way that is independent with programming languages, but instead rely
+on textual features only. Our model, once learned, can be used with
+little overhead. The learning process will be a one time cost.
+
+A lot of work has been done on characterization the hosting
+cite:Squire:2016:DSC:2901739.2903509 platform(like github
+cite:Cosentino:2016:FGM:2901739.2901776
+cite:Gousios:2014:LGG:2597073.2597126), the code sharing and
+colaborating architecture cite:Baysal:2012:MUD:2664446.2664460
+cite:Zhu:2016:MMD:2901739.2903502, as well as the project attributes
+cite:ValdiviaGarcia:2014:CPB:2597073.2597099 cite:Nguyen:2016:LSR:2901739.2901759.
+
+
+Contributors are the core of development, and they are the key to
+determine the quality of a project.  Robles et al
+cite:Robles:2014:FSD:2597073.2597129 conducted a survey about free
+software contributors to over 2000 people, and conclude their findings
+for challenges of curating, sharig, and combing.  Code review for the
+community cite:Yang:2016:MMC:2901739.2903504
+cite:Izquierdo-Cortazar:2016:CXP:2901739.2901778
+cite:Zagalsky:2016:RCC:2901739.2901772 is well studied, showing the
+community-based characterization.  Although open source projects are
+"open", the acceptance of contributions is strictly controlled
+cite:Padhye:2014:SEC:2597073.2597113. This kind of characteristic
+might show interesting patterns in projects of different
+qualities. For example, is the higher quality projects tend to be hard
+to contribute for newbees? Or the high quality of projects are
+achieved due to an open mind to newcomers?  Finally, an interesting
+feature that can be potential useful to us is the Microblog
+cite:Tian:2012:SEC:2664446.2664483, a new trend to communicate and to
+disseminate information amoung open source communities.
+
+One important textual feature is the documentation
+cite:Moslehi:2016:MCS:2901739.2901771, and the quality of
+documentation of a project can somehow decide the quality of the
+project. Testing cite:Gomez:2016:MTR:2901739.2901747 is another
+crucial part of modern developement that produce predictable and
+stable code. Both doucmentation and test cases ensures the
+maintainability of the projects, which is especially critical for open
+source projects.
+
+Our code technique can be used to help prioritize the repository for
+mining. For example, the recomandation system proposed by
+Diamantopoulos and Thomopoulos
+cite:Diamantopoulos:2016:QRR:2901739.2903492 can benefit from our
+approach by first prioritize the repositories by their predicted
+ratings, and provide a less overhead recommandation.  Evolution study
+cite:Kreutzer:2016:ACC:2901739.2901749
+cite:Baldassari:2014:USE:2597073.2597136 can also benefit from the
+predicted rating in the sense that the top rating projects often have
+more contributors, longer history, as well as high quality in-progress
+commit.
+
+
+
+
+
+
+
+bibliography:~/github/proceedings/msr16.bib,~/github/proceedings/msr14.bib,~/github/proceedings/msr12.bib
+bibliographystyle:plain

@@ -28,7 +28,7 @@ def search(lang, page_num):
 
 if __name__ == '__main__':
     # TODO multi-thread
-    # for lang in ['c', 'java', 'javascript', 'python', 'ruby', 'php', 'c++', 'c#', 'objective-c', 'shell']:
+    # for lang in ['c', 'java', 'javascript', 'python', 'ruby', 'php', 'c++', 'csharp', 'objective-c', 'shell']:
     for lang in ['shell']:
         search(lang, 10);
     # print(query)
