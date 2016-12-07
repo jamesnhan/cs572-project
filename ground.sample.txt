@@ -1,0 +1,30 @@
+== testdata//answer-huang--dSYMTools.zip
+size=71M
+NumOfTestFile=0
+NumOfDocFile=0
+NumOfSrcFile=32
+LOC=1424
+TotalFileDepth= 244
+TotalFileCt= 135
+TotalDirBranching= 176
+TotalDirCt= 41
+== testdata//RIOT-OS--RIOT.zip
+size=51M
+NumOfTestFile=0
+NumOfDocFile=23
+NumOfSrcFile=2776
+LOC=481616
+TotalFileDepth= 3574
+TotalFileCt= 3597
+TotalDirBranching= 4523
+TotalDirCt= 926
+== testdata//shellphish--how2heap.zip
+size=64K
+NumOfTestFile=0
+NumOfDocFile=0
+NumOfSrcFile=13
+LOC=501
+TotalFileDepth= 0
+TotalFileCt= 13
+TotalDirBranching= 13
+TotalDirCt= 0
